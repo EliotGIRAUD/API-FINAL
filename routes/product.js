@@ -1,9 +1,11 @@
 const express = require('express');
-const { Product, Tag } = require('../models');
+const { Product, Tag, Sequelize } = require('../models');
 const router = express.Router();
+const authMiddleware = require('../middlewares/authMiddleware');
+const { Op } = require('sequelize');
 
 // **1. Lister les produits avec pagination et filtrage**
-router.get('/', async (req, res) => {
+router.get('/',  async (req, res) => {
     const { page = 1, size = 10, tags } = req.query;
 
     try {
@@ -38,6 +40,45 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.get('/filter', async (req, res) => {
+    try {
+        // Récupération des paramètres
+        const { minPrice, maxPrice, tags } = req.query;
+
+        // Construction de la clause WHERE pour les produits
+        const whereClause = {};
+
+        if (minPrice) whereClause.price = { [Op.gte]: parseFloat(minPrice) }; // Prix >= minPrice
+        if (maxPrice) whereClause.price = { ...whereClause.price, [Op.lte]: parseFloat(maxPrice) }; // Prix <= maxPrice
+
+        // Gestion des tags
+        let tagsFilter = [];
+        if (tags) {
+            tagsFilter = tags.split(',');
+        }
+
+        const products = await Product.findAll({
+            where: whereClause,
+            include: tagsFilter.length
+                ? [
+                    {
+                        model: Tag,
+                        as: 'tags',
+                        where: { name: { [Op.in]: tagsFilter } },
+                        through: { attributes: [] }, // Ignore les colonnes de la table pivot
+                    },
+                ]
+                : [], // Pas de filtre sur les tags si aucun tag n'est spécifié
+        });
+
+        res.json(products);
+    } catch (error) {
+        console.error('Erreur lors du filtrage des produits:', error);
+        res.status(500).json({ message: 'Erreur serveur', error: { name: error.name } });
+    }
+});
+
+
 // **2. Voir les détails d’un produit**
 router.get('/:id', async (req, res) => {
     try {
@@ -55,18 +96,14 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+router.use(authMiddleware(['admin']));
+
 // **3. Créer un produit (admin)**
-router.post('/', async (req, res) => {
-    const { title, price, description, stock, tags } = req.body;
+router.post('/add', async (req, res) => {
+    const { title, price, description, stock } = req.body;
 
     try {
         const product = await Product.create({ title, price, description, stock });
-
-        // Ajouter des tags
-        if (tags && tags.length) {
-            const tagInstances = await Tag.findAll({ where: { name: tags } });
-            await product.addTags(tagInstances);
-        }
 
         res.status(201).json(product);
     } catch (error) {
@@ -74,9 +111,21 @@ router.post('/', async (req, res) => {
     }
 });
 
+// Route pour ajouter plusieurs produits
+router.post('/add-multiple', async (req, res) => {
+    const products = req.body; // Un tableau de produits à ajouter
+
+    try {
+        const createdProducts = await Product.bulkCreate(products); // Utiliser bulkCreate pour un gros feed
+        res.status(201).json(createdProducts);
+    } catch (error) {
+        res.status(500).json({ message: 'Erreur lors de l\'ajout des produits', error });
+    }
+});
+
 // **4. Modifier un produit (admin)**
 router.put('/:id', async (req, res) => {
-    const { title, price, description, stock, tags } = req.body;
+    const { title, price, description, stock } = req.body;
 
     try {
         const product = await Product.findByPk(req.params.id);
@@ -86,11 +135,6 @@ router.put('/:id', async (req, res) => {
 
         await product.update({ title, price, description, stock });
 
-        // Mettre à jour les tags
-        if (tags && tags.length) {
-            const tagInstances = await Tag.findAll({ where: { name: tags } });
-            await product.setTags(tagInstances);
-        }
 
         res.json(product);
     } catch (error) {

@@ -1,4 +1,6 @@
 const { Model } = require('sequelize');
+const { DataTypes } = require('sequelize');
+const sequelize = require("../core/orm");
 
 'use strict';
 module.exports = (sequelize, DataTypes) => {
