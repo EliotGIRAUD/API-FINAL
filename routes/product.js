@@ -44,7 +44,6 @@ router.get('/filter', async (req, res) => {
     try {
         // Récupération des paramètres
         const { minPrice, maxPrice, tags } = req.query;
-        console.log('Params de filtrage:', { minPrice, maxPrice, tags });
 
         // Construction de la clause WHERE pour les produits
         const whereClause = {};
