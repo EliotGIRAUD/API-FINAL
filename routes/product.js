@@ -4,7 +4,7 @@ const router = express.Router();
 const authMiddleware = require('../middlewares/authMiddleware');
 const { Op } = require('sequelize');
 
-// **1. Lister les produits avec pagination et filtrage**
+// Lister les produits avec pagination et filtrage
 router.get('/',  async (req, res) => {
     const { page = 1, size = 10, tags } = req.query;
 
@@ -98,7 +98,7 @@ router.get('/:id', async (req, res) => {
 
 router.use(authMiddleware(['admin']));
 
-// **3. Créer un produit (admin)**
+// Créer un produit
 router.post('/add', async (req, res) => {
     const { title, price, description, stock } = req.body;
 
@@ -123,7 +123,7 @@ router.post('/add-multiple', async (req, res) => {
     }
 });
 
-// **4. Modifier un produit (admin)**
+// Modifier un produit
 router.put('/:id', async (req, res) => {
     const { title, price, description, stock } = req.body;
 
@@ -142,7 +142,7 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// **5. Supprimer un produit (admin)**
+// Supprimer un produit
 router.delete('/:id', async (req, res) => {
     try {
         const product = await Product.findByPk(req.params.id);

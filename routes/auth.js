@@ -6,7 +6,7 @@ const { generateToken } = require('../utils/jwt');
 
 const router = express.Router();
 
-// Signup 
+// S'inscrire 
 router.post('/signup',
     [
         body('email').isEmail().withMessage('Email invalide'),
@@ -42,7 +42,7 @@ router.post('/signup',
     }
 );
 
-// Login
+// S'identifier
 router.post('/login',
     [
         body('email').isEmail().withMessage('Email invalide'),

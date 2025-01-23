@@ -24,7 +24,7 @@ app.use('/productTag', productTagRoutes);
 const PORT = 4000;
 app.listen(PORT, async () => {
     console.log(`Serveur lancé sur http://localhost:${PORT}`);
-
+    // Synchronisation de la db :
     // try {
     //     await sequelize.sync({ alter: true }); // Synchronise les modèles avec la base de données
     //     console.log('Base de données synchronisée avec succès !');
