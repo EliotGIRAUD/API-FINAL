@@ -1,18 +1,27 @@
 const express = require('express');
-const { sequelize } = require('./models'); // Importer sequelize depuis index.js
+require('dotenv').config();
+const { sequelize } = require('./models');
+const authRoutes = require('./routes/auth');
+const cartRoutes = require('./routes/cart');
+const orderRoutes = require('./routes/orders');
 const productRoutes = require('./routes/product');
 const indexRoutes = require('./routes/index');
+const tagRoutes = require('./routes/tag');
+const productTagRoutes = require('./routes/productTag');
 
 const app = express();
 app.use(express.json());
 
+app.use('/auth', authRoutes);
 
-app.use('/products', productRoutes);
+app.use('/product', productRoutes);
 app.use('/', indexRoutes);
+app.use('/cart', cartRoutes);
+app.use('/orders', orderRoutes);
+app.use('/tag', tagRoutes);
+app.use('/productTag', productTagRoutes);
 
-
-// Lancer le serveur et synchroniser la base
-const PORT = process.env.PORT || 3000;
+const PORT = 4000;
 app.listen(PORT, async () => {
     console.log(`Serveur lancé sur http://localhost:${PORT}`);
 
@@ -23,3 +32,11 @@ app.listen(PORT, async () => {
     //     console.error('Erreur lors de la synchronisation de la base de données :', error);
     // }
 });
+
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ message: 'Une erreur serveur est survenue', error: err.message });
+});
+
+module.exports = app;
+
